@@ -34,9 +34,8 @@ void * id (void *arg){
 	long i = (long)arg;
 	sem_wait(&sem[i-1]);
 	printf("Soy el thread %ld\n", i);
-	int next = buff[(l)%N];
+	sem_post(&sem[buff[l]-1]);
 	l++;
-	sem_post(&sem[next-1]);
 	pthread_exit(0);
 }
 
