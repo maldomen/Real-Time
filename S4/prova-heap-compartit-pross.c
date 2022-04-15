@@ -5,14 +5,19 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <pthread.h>
+//tot i que els punters apuntin a la mateixa direccio la memoria de cada proces esta mapejada a diferent memoria fisica
+//per tant no es comparteix res :(
+ 
 int globalVar; /*  A global variable*/
   
 int main(void)
 {
     int localVar = 0;
     int* p = (int*) malloc(2);
-    pid_t childPID = fork();
-  
+    pid_t childPID;
+    childPID = fork();
+
+    printf("%d\n",childPID);
     // Putting value at allocated address
     *p = 0;
   
@@ -42,9 +47,11 @@ int main(void)
             *p = 200;
             printf("\n Address of malloced mem child = %p "
                    "and value is %d\n\n\n", p, *p);
+            
         }
         else // Parent process
-        {
+        {   wait(NULL);
+            printf("bueno com aminim entra\n\n\n\n");
             printf("\n Parent process Initial Value :: "
                    "localVar = %d, globalVar = %d",
                    localVar, globalVar);
@@ -71,6 +78,6 @@ int main(void)
         printf("\n Fork failed, quitting!!!!!!\n");
         return 1;
     }
-  
+    printf("child acaba?\n");
     return 0;
 }

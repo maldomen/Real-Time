@@ -15,13 +15,15 @@ int main(){
 	close(r);
 	
 	while(1){
-		while(region[2] != 1);
-		pthread_mutex_lock(&critical);//esta
+		
+		printf("programb");
+		//while(region[2] != 1);
+		pthread_mutex_lock((pthread_mutex_t*)&region[3]);//esta
 		region[1] = 0;
 		printf("Programa B recibe: %ld\n", (long)region[0]);
 		region[1] = 1;
 		region[2] = 0;
-		pthread_mutex_unlock(&critical);//esta
+		pthread_mutex_unlock((pthread_mutex_t*)&region[3]);//esta
 	}
 	
 	munmap(region, 4096);	
