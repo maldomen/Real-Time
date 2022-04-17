@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 int main(){
-    FILE *proc=fopen("clientprocessid.txt","r");
+    FILE *proc=fopen("serverprocessid.txt","r");
     int id;
     fscanf(proc,"%d",&id);
     return(kill(id,SIGKILL));
