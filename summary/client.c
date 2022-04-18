@@ -100,7 +100,7 @@ int main(int argc,char **argv)
     //threads
     pthread_t write,read;
     pthread_create(&write,NULL,cl_wr,NULL);
-    //pthread_create(&read,NULL,cl_rd,NULL);
+    pthread_create(&read,NULL,cl_rd,NULL);
     pthread_join(write,NULL);
-    //pthread_join(read,NULL);
+    pthread_join(read,NULL);
 }
