@@ -12,7 +12,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-char buff[1024],*usrnm,*ip,*pin,*pout;
+char buff[256],*usrnm,*ip,*pin,*pout;
 
 void USR1_handler(){
     printf("\nSIGUSR1 tancant client\n");
@@ -22,9 +22,11 @@ void USR1_handler(){
 void * cl_wr(){
     struct addrinfo addr,*result,*rp;
     int s,sdf;
+    char buffin[256];
     memset(&addr,0,sizeof(addr));
     addr.ai_family=AF_INET;addr.ai_socktype=SOCK_STREAM;addr.ai_protocol=0;addr.ai_flags=0;
     
+
     s=getaddrinfo(ip,pin,&addr,&result);
     if(s!=0){printf("error getaddrinfo client pin\n");exit(0);}
     //provem de conectarnos als resultats de getaddrinfo
@@ -37,18 +39,23 @@ void * cl_wr(){
     freeaddrinfo(result);
     if(rp==NULL){printf("no s'ha pogut conectar client a pin\n");exit(0);} //fail
 
-    sprintf(buff, "%s\n",usrnm);
-    write(sdf,buff,strlen(buff));
+    sprintf(buffin,"%s",usrnm);
+    //write(sdf,buff,sizeof(buff));
+    //sleep(1);
+    printf("buffin:%s",buffin);
+    int a;
     while(1){
-    sprintf(buff, "hola tio la puestada que llevo\n");
-	write(sdf,buff, strlen(buff));
-    sleep(2);
+    printf("dins while\n");
+    a=send(sdf,buffin,strlen(buffin),MSG_MORE);
+    printf("despres send while return:%d\n",a);
+    fgets(buffin,sizeof(buffin),stdin);
     }
 }
 
 void * cl_rd(){
     struct addrinfo addr,*result,*rp;
     int s,sdf;
+    char buffout[256];
     memset(&addr,0,sizeof(addr));
     addr.ai_family=AF_INET;addr.ai_socktype=SOCK_STREAM;addr.ai_protocol=0;addr.ai_flags=0;
     
@@ -63,7 +70,11 @@ void * cl_rd(){
     }
     freeaddrinfo(result);
     if(rp==NULL){printf("no s'ha pogut conectar client pout\n");exit(0);} //fail
-    while(1) printf("clienrd bee\n");
+    while(1){
+        recv(sdf,buffout,sizeof(buffout),0);
+        write(1,buffout,strlen(buffout));
+    }
+
     /* read a fer
     while(1){
     sprintf(buff, "hola tio la puestada que llevo\n");
@@ -87,6 +98,11 @@ int main(int argc,char **argv)
     ip=argv[2];
     pin=argv[3];
     pout=argv[4];
+    //pin!=pout
+    if(strcmp(pin,pout)==0){
+        printf("Port-in Port-out han de ser diferents\n");
+        return -1;
+    }
     printf("usr;%s ip:%s pin%s pout%s\n",usrnm,ip,pin,pout);
     //pid del proces
     FILE *fproc=fopen("clientprocessid.txt","w+");
@@ -103,4 +119,5 @@ int main(int argc,char **argv)
     pthread_create(&read,NULL,cl_rd,NULL);
     pthread_join(write,NULL);
     pthread_join(read,NULL);
+    
 }
