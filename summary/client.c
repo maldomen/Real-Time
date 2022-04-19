@@ -43,13 +43,14 @@ void * cl_wr(){
     //write(sdf,buff,sizeof(buff));
     //sleep(1);
     printf("buffin:%s",buffin);
-    
+    write(sdf,buffin,strlen(buffin));
+
     //send(sdf,buffin,strlen(buffin),MSG_MORE); //enviem usrnm
     while(1){
     printf("dins while\n");
+    fgets(buffin,sizeof(buffin),stdin);
     write(sdf,buffin,strlen(buffin));
     printf("despres send while return\n");
-    fgets(buffin,sizeof(buffin),stdin);
     }
 }
 

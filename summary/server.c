@@ -33,7 +33,7 @@ void *thdatclient(void*arg){
     while(1){
         recv(client[clnum].fd_in,msg,sizeof(msg),0);
         for(int i=0;i<numclient;i++){
-            send(client[i].fd_out,msg,strlen(msg),0);
+            if(clnum!=i) send(client[i].fd_out,msg,strlen(msg),0);
         }
 
     }
@@ -148,7 +148,6 @@ int main(int argc,char** argv)
             exit(EXIT_FAILURE);
         }
         printf("nova conexioaa\n");
-        sleep(1);
         msglen=read(new_socket_in,buffer,256);
         //msglen=recv(new_socket_in,buffer,256,0);
         /*if(msglen<0){
