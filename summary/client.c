@@ -43,11 +43,12 @@ void * cl_wr(){
     //write(sdf,buff,sizeof(buff));
     //sleep(1);
     printf("buffin:%s",buffin);
-    int a;
+    
+    //send(sdf,buffin,strlen(buffin),MSG_MORE); //enviem usrnm
     while(1){
     printf("dins while\n");
-    a=send(sdf,buffin,strlen(buffin),MSG_MORE);
-    printf("despres send while return:%d\n",a);
+    write(sdf,buffin,strlen(buffin));
+    printf("despres send while return\n");
     fgets(buffin,sizeof(buffin),stdin);
     }
 }
@@ -117,7 +118,7 @@ int main(int argc,char **argv)
     pthread_t write,read;
     pthread_create(&write,NULL,cl_wr,NULL);
     pthread_create(&read,NULL,cl_rd,NULL);
-    pthread_join(write,NULL);
-    pthread_join(read,NULL);
-    
+    //pthread_join(write,NULL);
+    //pthread_join(read,NULL);
+    while(1);
 }

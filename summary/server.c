@@ -72,11 +72,10 @@ int main(int argc,char** argv)
     //sockets
     int server_fd_in,server_fd_out, new_socket_in,new_socket_out, valread;
     struct sockaddr_in adress_in,adress_out;
-    //int opt = 1;
-    
     int addrlenin = sizeof(adress_in),addrlenout = sizeof(adress_out);
     char buffer[256];
     pthread_t id[MAX_CLIENTS];
+
     // Creating socket file descriptor
     
     if ((server_fd_in = socket(AF_INET, SOCK_STREAM, 0))
@@ -105,6 +104,7 @@ int main(int argc,char** argv)
         perror("listen");
         exit(EXIT_FAILURE);
     }
+    printf("aqi\n");
 
     //mateix procediment socket2
     //*************************
@@ -144,13 +144,13 @@ int main(int argc,char** argv)
     
         if ((new_socket_in= accept(server_fd_in, (struct sockaddr*)&adress_in,(socklen_t*)&addrlenin))< 0  
         || (new_socket_out= accept(server_fd_out, (struct sockaddr*)&adress_out,(socklen_t*)&addrlenout))< 0) {
-            perror("accept");
+            printf("accept\n");
             exit(EXIT_FAILURE);
         }
-        printf("nova conexio\n");
-        //valread = read(new_socket_in, buffer,sizeof(buffer));
+        printf("nova conexioaa\n");
         sleep(1);
-        msglen=recv(new_socket_in,buffer,sizeof(buffer),0);
+        msglen=read(new_socket_in,buffer,256);
+        //msglen=recv(new_socket_in,buffer,256,0);
         /*if(msglen<0){
             char joder[256];
             strerror_r(errno,joder,256);
@@ -169,22 +169,5 @@ int main(int argc,char** argv)
     printf("arribat maxim numero de clients\n"); 
     while(1);
 }
-    /*provatemp
-    printf("sembla que tot be\n");
-    if ((new_socket
-         = accept(server_fd_in, (struct sockaddr*)&adress_in,
-                  (socklen_t*)&addrlenin))
-        < 0) {
-        perror("accept");
-        exit(EXIT_FAILURE);
-    }
-    
-    printf("sembla que tot be\n");
-    valread = read(new_socket, buffer, 1024);
-    printf("%s\n", buffer);
-    send(new_socket, hello, strlen(hello), 0);
-    printf("Hello message sent\n");
-    return 0;
-    */
    
 
