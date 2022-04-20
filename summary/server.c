@@ -36,6 +36,12 @@ void *thdatclient(void*arg){
     int connected=1;
     client[clnum].estat=1;
     char msg[MAX_BUFF],msgusr[MAX_BUFF];
+    memset(msgusr,'\0',sizeof(msgusr));//borrem tot el buffer
+    sprintf(msgusr,"%s s'ha conectat al chat :)\n",client[clnum].usrnm);
+    for(int i=0;i<numclient;i++){
+            
+                if(clnum!=i && client[i].estat!=0)write(client[i].fd_out,msgusr,strlen(msgusr));
+            }
     while(connected!=0){
         //printf("dise\n");
         memset(msg,'\0',sizeof(msg));//borrem tot el buffer
@@ -43,6 +49,7 @@ void *thdatclient(void*arg){
         connected=read(client[clnum].fd_in,msg,sizeof(msg));
         if(connected>0){
             sprintf(msgusr,"%s",client[clnum].usrnm);
+            strcat(msgusr,":");
             strcat(msgusr,msg);//juntar username amb missatge
             //printf("valor al byuff:%s",msgusr);
             for(int i=0;i<numclient;i++){
@@ -52,6 +59,12 @@ void *thdatclient(void*arg){
         }
 
     }
+    memset(msgusr,'\0',sizeof(msgusr));//borrem tot el buffer
+    sprintf(msgusr,"%s s'ha desconectat del chat :(\n",client[clnum].usrnm);
+    for(int i=0;i<numclient;i++){
+            
+                if(clnum!=i && client[i].estat!=0)write(client[i].fd_out,msgusr,strlen(msgusr));
+            }
     printf("client %s desconecat\n",client[clnum].usrnm);
     client[clnum].estat=0;//client mort, amb aquest disseny de thread de server es complicat borrarlo de la llista i que els demes el seu numero de client --
     close(client[clnum].fd_in);
@@ -187,7 +200,6 @@ int main(int argc,char** argv)
         printf("client %s conectat\n", buffer);
         client[numclient].fd_in=new_socket_in;
         client[numclient].fd_out=new_socket_out;
-        strcat(buffer,":");
         strcpy(client[numclient].usrnm,buffer);
         pthread_create(&id[numclient],NULL,thdatclient,(void*)&numclient);
         
