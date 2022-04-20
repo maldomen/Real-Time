@@ -12,8 +12,10 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-char buff[256],*usrnm,*ip,*pin,*pout;
+#define MAX_BUFF 2048
 
+char buff[MAX_BUFF],*usrnm,*ip,*pin,*pout;
+int sdfwr,sdfrd;
 void USR1_handler(){
     printf("\nSIGUSR1 tancant client\n");
     exit(0);
@@ -21,8 +23,8 @@ void USR1_handler(){
 
 void * cl_wr(){
     struct addrinfo addr,*result,*rp;
-    int s,sdf;
-    char buffin[256];
+    int s;
+    char buffin[MAX_BUFF];
     memset(&addr,0,sizeof(addr));
     addr.ai_family=AF_INET;addr.ai_socktype=SOCK_STREAM;addr.ai_protocol=0;addr.ai_flags=0;
     
@@ -31,33 +33,36 @@ void * cl_wr(){
     if(s!=0){printf("error getaddrinfo client pin\n");exit(0);}
     //provem de conectarnos als resultats de getaddrinfo
     for(rp=result;rp!=NULL;rp=rp->ai_next){
-        sdf=socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
-        if(sdf==-1) continue;
-        if(connect(sdf,rp->ai_addr,rp->ai_addrlen)!=-1) break; //sucess
-        close(sdf);
+        sdfwr=socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
+        if(sdfwr==-1) continue;
+        if(connect(sdfwr,rp->ai_addr,rp->ai_addrlen)!=-1) break; //sucess
+        close(sdfwr);
     }
     freeaddrinfo(result);
     if(rp==NULL){printf("no s'ha pogut conectar client a pin\n");exit(0);} //fail
 
     sprintf(buffin,"%s",usrnm);
-    //write(sdf,buff,sizeof(buff));
+    //write(sdfwr,buff,sizeof(buff));
     //sleep(1);
-    printf("buffin:%s",buffin);
-    write(sdf,buffin,strlen(buffin));
+    //printf("buffin:%s",buffin);
+    printf("conectat al servei de chat\n");
+    write(sdfwr,buffin,strlen(buffin));
 
-    //send(sdf,buffin,strlen(buffin),MSG_MORE); //enviem usrnm
+    //send(sdfwr,buffin,strlen(buffin),MSG_MORE); //enviem usrnm
     while(1){
-    printf("dins while\n");
+    memset(buffin,'\0',sizeof(buffin));//borrem tot el buffer
+    //buffin[0]='\0';
+    //printf("dins while\n");
     fgets(buffin,sizeof(buffin),stdin);
-    write(sdf,buffin,strlen(buffin));
-    printf("despres send while return\n");
+    write(sdfwr,buffin,strlen(buffin));
+    //printf("despres send while return\n");
     }
 }
 
 void * cl_rd(){
     struct addrinfo addr,*result,*rp;
-    int s,sdf;
-    char buffout[256];
+    int s;
+    char buffout[MAX_BUFF];
     memset(&addr,0,sizeof(addr));
     addr.ai_family=AF_INET;addr.ai_socktype=SOCK_STREAM;addr.ai_protocol=0;addr.ai_flags=0;
     
@@ -65,22 +70,23 @@ void * cl_rd(){
     if(s!=0){printf("error getaddrinfo client pout\n");exit(0);}
     //provem de conectarnos als resultats de getaddrinfo
     for(rp=result;rp!=NULL;rp=rp->ai_next){
-        sdf=socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
-        if(sdf==-1) continue;
-        if(connect(sdf,rp->ai_addr,rp->ai_addrlen)!=-1) break; //sucess
-        close(sdf);
+        sdfrd=socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
+        if(sdfrd==-1) continue;
+        if(connect(sdfrd,rp->ai_addr,rp->ai_addrlen)!=-1) break; //sucess
+        close(sdfrd);
     }
     freeaddrinfo(result);
     if(rp==NULL){printf("no s'ha pogut conectar client pout\n");exit(0);} //fail
     while(1){
-        recv(sdf,buffout,sizeof(buffout),0);
+        memset(buffout,'\0',sizeof(buffout));//borrem tot el buffer
+        read(sdfrd,buffout,sizeof(buffout));
         write(1,buffout,strlen(buffout));
     }
 
     /* read a fer
     while(1){
     sprintf(buff, "hola tio la puestada que llevo\n");
-	write(sdf,buff, strlen(buff));
+	write(sdfrd,buff, strlen(buff));
     sleep(2);
     */
 }
@@ -105,11 +111,11 @@ int main(int argc,char **argv)
         printf("Port-in Port-out han de ser diferents\n");
         return -1;
     }
-    printf("usr;%s ip:%s pin%s pout%s\n",usrnm,ip,pin,pout);
+    //printf("usr;%s ip:%s pin%s pout%s\n",usrnm,ip,pin,pout);
     //pid del proces
     FILE *fproc=fopen("clientprocessid.txt","w+");
     fprintf(fproc,"%d",getpid());
-    fflush(stdout);//ens asegurem que el fitxer sigui escrit encara que no acabi en \n
+    fflush(stdout);//ens asegurem que el fitxer sigui escrit 
     fclose(fproc);
     //SIGUSR1 acaba el programa
     struct sigaction mata={0};

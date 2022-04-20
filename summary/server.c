@@ -15,33 +15,62 @@
 #include <errno.h>
 
 #define MAX_CLIENTS 100
+#define MAX_BUFF 2048
 
 struct clients{
-    int fd_in,fd_out;
+    int fd_in,fd_out,estat;
     char usrnm[100];
+    
 };
 
 struct clients client[MAX_CLIENTS]; //vector global clients
 sem_t sem;
-long int numclient;
+int server_fd_in,server_fd_out, new_socket_in,new_socket_out;
+long int numclient;//numero total clients
 
 void *thdatclient(void*arg){
     long int clnum=*(int*)arg;
-    printf("argument pasat a thd%ld\n",clnum);
+    
+    //printf("argument pasat a thd%ld, usr de thd:%s\n",clnum,client[clnum].usrnm);
     sem_post(&sem);
-    char msg[256];
-    while(1){
-        recv(client[clnum].fd_in,msg,sizeof(msg),0);
-        for(int i=0;i<numclient;i++){
-            if(clnum!=i) send(client[i].fd_out,msg,strlen(msg),0);
+    int connected=1;
+    client[clnum].estat=1;
+    char msg[MAX_BUFF],msgusr[MAX_BUFF];
+    while(connected!=0){
+        //printf("dise\n");
+        memset(msg,'\0',sizeof(msg));//borrem tot el buffer
+        memset(msgusr,'\0',sizeof(msgusr));//borrem tot el buffer
+        connected=read(client[clnum].fd_in,msg,sizeof(msg));
+        if(connected>0){
+            sprintf(msgusr,"%s",client[clnum].usrnm);
+            strcat(msgusr,msg);//juntar username amb missatge
+            //printf("valor al byuff:%s",msgusr);
+            for(int i=0;i<numclient;i++){
+            
+                if(clnum!=i && client[i].estat!=0)write(client[i].fd_out,msgusr,strlen(msgusr));
+            }
         }
 
     }
-
+    printf("client %s desconecat\n",client[clnum].usrnm);
+    client[clnum].estat=0;//client mort, amb aquest disseny de thread de server es complicat borrarlo de la llista i que els demes el seu numero de client --
+    close(client[clnum].fd_in);
+    close(client[clnum].fd_in);
+    
 }
 
 void USR2_handler(){
     printf("\nSIGUSR2 tancant client\n");
+    for(int j=0;j<numclient;j++){
+        close(client[j].fd_in);
+        close(client[j].fd_out);
+        
+    }
+    close(new_socket_in);
+    close(new_socket_out);
+    close(server_fd_in);
+    close(server_fd_out);
+    
     exit(0);
 }
 
@@ -54,7 +83,7 @@ int main(int argc,char** argv)
     //VARIABLES SOCKT
     
     char *pin=argv[1],*pout=argv[2];
-    printf("pin %s pout %s\n",pin,pout);
+    //printf("pin %s pout %s\n",pin,pout);
     //pin!=pout
     if(strcmp(pin,pout)==0){
         printf("Port-in Port-out han de ser diferents\n");
@@ -70,10 +99,10 @@ int main(int argc,char** argv)
     mata.sa_handler=USR2_handler;
     sigaction(SIGUSR2,&mata,NULL);
     //sockets
-    int server_fd_in,server_fd_out, new_socket_in,new_socket_out, valread;
+    int valread;
     struct sockaddr_in adress_in,adress_out;
     int addrlenin = sizeof(adress_in),addrlenout = sizeof(adress_out);
-    char buffer[256];
+    char buffer[MAX_BUFF];
     pthread_t id[MAX_CLIENTS];
 
     // Creating socket file descriptor
@@ -104,7 +133,6 @@ int main(int argc,char** argv)
         perror("listen");
         exit(EXIT_FAILURE);
     }
-    printf("aqi\n");
 
     //mateix procediment socket2
     //*************************
@@ -140,24 +168,26 @@ int main(int argc,char** argv)
     sem_init(&sem,0,0);
     int msglen;
     numclient=0;
+    printf("server iniciat esperant clients\n");
     while(numclient<MAX_CLIENTS){
-    
+        //buffer[0]='\0';
+        memset(buffer,'\0',sizeof(buffer));//borrem tot el buffer
         if ((new_socket_in= accept(server_fd_in, (struct sockaddr*)&adress_in,(socklen_t*)&addrlenin))< 0  
         || (new_socket_out= accept(server_fd_out, (struct sockaddr*)&adress_out,(socklen_t*)&addrlenout))< 0) {
             printf("accept\n");
             exit(EXIT_FAILURE);
         }
-        printf("nova conexioaa\n");
-        msglen=read(new_socket_in,buffer,256);
-        //msglen=recv(new_socket_in,buffer,256,0);
+        msglen=read(new_socket_in,buffer,MAX_BUFF);
+        //msglen=recv(new_socket_in,buffer,MAX_BUFF,0);
         /*if(msglen<0){
-            char joder[256];
-            strerror_r(errno,joder,256);
+            char joder[MAX_BUFF];
+            strerror_r(errno,joder,MAX_BUFF);
             printf("ERROR:%s",buffer);
         }*/
-        printf("client %s conectat len:%d\n", buffer,msglen);
+        printf("client %s conectat\n", buffer);
         client[numclient].fd_in=new_socket_in;
         client[numclient].fd_out=new_socket_out;
+        strcat(buffer,":");
         strcpy(client[numclient].usrnm,buffer);
         pthread_create(&id[numclient],NULL,thdatclient,(void*)&numclient);
         
