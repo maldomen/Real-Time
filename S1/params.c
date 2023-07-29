@@ -21,9 +21,9 @@ int stringcompadre(char *sr1, char *sr2){
 	}
 	else{
 		int i;
-		for(i=0; i< len1-1; i++){
+		for(i=0; i<= len1-1; i++){
 			if(sr1[i] != sr2[i]){
-				return -1;
+				return 2;
 			}
 		}
 		return 0;	
@@ -76,7 +76,12 @@ int main(int argc, char **argv){
 			return 1;
 		}
 		else if(stringcompadre(argv[2],argv[3])==-1){
-			sprintf(buff, "La cadena 1 es mas corta que la cadena 2 o son igual de largas con diferentes caracteres\n");
+			sprintf(buff, "La cadena 1 es mas corta que la cadena 2\n");
+			write(1,buff, length(buff));
+			return 1;
+		}
+		else if(stringcompadre(argv[2],argv[3])==2){
+			sprintf(buff, "las cadenas son igual de largas con diferentes caracteres\n");
 			write(1,buff, length(buff));
 			return 1;
 		}
